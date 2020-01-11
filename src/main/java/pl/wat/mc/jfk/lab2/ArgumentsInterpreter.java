@@ -18,39 +18,51 @@ public class ArgumentsInterpreter {
     }
     public void mainLoop() throws IOException, NotFoundException, CannotCompileException {
         String operationType = null;
+        boolean listingFlag = false;
+        boolean scriptFlag = false;
         for(String arg: args){
-
-            if(arg.equals("--list-classes")){
+            if (arg.equals("--list-classes")) {
+                listingFlag = true;
                 jcm.printClassNames();
-            }
-            else if(arg.equals("--list-packages")){
+            } else if (arg.equals("--list-packages")) {
+                listingFlag = true;
                 jcm.printPackageNames();
             }
             else if(arg.charAt(0)=='-'&&arg.charAt(1)=='-') operationType = arg;
             else if(operationType.equals("--i")){
                 jcm = new JarContentManager(arg);
                 cm = new ClassesManager(jcm);
-                operationType ="";
             }
-            else if(operationType.equals("--list-methods")){
-                cm.listClassMethods(arg);
-                operationType ="";
-            }
-            else if(operationType.equals("--list-fields")){
-                cm.listClassFields(arg);
-                operationType ="";
-            }
-            else if(operationType.equals("--list-ctors")){
-                cm.listClassFields(arg);
-                operationType ="";
+            else if(operationType.equals("--o")){
+                jcm.outputFileName = arg;
+                si.fileInterpreter();
             }
             else if(operationType.equals("--script")){
-                jcm.initForScript();
-                si = new ScriptInterpreter(arg,jcm,cm);
-
-
+                if(!listingFlag) {
+                    scriptFlag=true;
+                    jcm.initForScript();
+                    si = new ScriptInterpreter(arg, jcm, cm);
+                }
             }
+            else if(!scriptFlag) {
 
+                if (operationType.equals("--list-methods")) {
+                    listingFlag = true;
+                    cm.listClassMethods(arg);
+                    operationType ="";
+                } else if (operationType.equals("--list-fields")) {
+                    cm.listClassFields(arg);
+                    listingFlag = true;
+                    operationType ="";
+                } else if (operationType.equals("--list-ctors")) {
+                    listingFlag = true;
+                    cm.listClassConstructors(arg);
+                    operationType ="";
+                }
+            }
+        }
+        if(jcm.outputFileName == null){
+            System.out.println("Output file parameter missing. Changes won't be saved.");
         }
     }
 }

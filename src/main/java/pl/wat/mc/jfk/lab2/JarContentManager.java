@@ -5,9 +5,10 @@ import javassist.CtClass;
 import javassist.NotFoundException;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.*;
 import java.util.jar.*;
 
 
@@ -17,13 +18,16 @@ public class JarContentManager {
     private final String fileName;
     private final String fullPath;
     private final String tempFolderName = "/temp/";
-    public ClassPool classPool;
+    public String outputFileName;
+    private ClassPool classPool;
     private Manifest manifest;
 
     public final List<String> classNames;
     public final List<String> packageNames;
 
-    public JarContentManager(String jarPath) throws IOException, NotFoundException {
+    private URL[] urls;
+
+    public JarContentManager(String jarPath) throws IOException {
 
         this.fullPath = jarPath;
         this.filePath = jarPath.substring(0,jarPath.lastIndexOf('/'));
@@ -31,13 +35,28 @@ public class JarContentManager {
         this.classNames = new ArrayList<>();
         this.packageNames = new ArrayList<>();
         this.classPool = getJarClassPool();
+        this.outputFileName = "";
+        System.out.println(fullPath);
+        this.urls = new URL[]{new File(fullPath).toURI().toURL()};
         getPackageAndClassNames();
-
         initForScript();
-        //this.classUrls = new URL[]{new URL("jar:file:" + jarPath + "!/")};
+    }
+    public Class<?> loadClass(String classPath){
+        Class returnClass = null;
+        try {
+            URLClassLoader cl = new URLClassLoader(urls,this.getClass().getClassLoader());
+
+            returnClass = cl.loadClass(classPath);
+           // cl.close();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return returnClass;
+
 
     }
-    public void initForScript() throws NotFoundException, IOException {
+
+    public void initForScript() throws IOException {
         getJarClassPool();
         getJarManifest();
         unzipJarToTemp();
@@ -62,7 +81,6 @@ public class JarContentManager {
             try {
                 classPool = ClassPool.getDefault();
                 classPool.insertClassPath(filePath + tempFolderName);
-                classPool.doPruning = false;
             }catch(NotFoundException e){
                 e.printStackTrace();
                 System.out.println("Error in getting class pool in path"+filePath+tempFolderName);
@@ -91,16 +109,18 @@ public class JarContentManager {
         for (Enumeration<JarEntry> enums = jar.entries(); enums.hasMoreElements();){
             JarEntry entry = enums.nextElement();
             String name = entry.getName();
-            if(name.endsWith(".class")) classNames.add(entry.getName().replaceAll("/","\\."));
+            if(name.endsWith(".class")) classNames.add(entry.getName().replaceAll("/","\\.").replaceAll(".class",""));
             else if (name.endsWith("/")&&!name.equals("META-INF/")) packageNames.add(name.replaceAll("/","."));
         }
     }
     public void printClassNames(){
+        System.out.println("Class names:");
         for(String className:classNames){
             System.out.println(className);
         }
     }
     public void printPackageNames(){
+        System.out.println("Package names:");
         for(String packageName:packageNames){
             System.out.println(packageName);
         }
@@ -122,8 +142,8 @@ public class JarContentManager {
             if (fileName.endsWith("/")) {
                 f.mkdirs();
             }
-
         }
+
         for (Enumeration<JarEntry> enums = jar.entries(); enums.hasMoreElements();) {
             JarEntry entry = enums.nextElement();
 
@@ -140,6 +160,7 @@ public class JarContentManager {
                 is.close();
             }
         }
+        jar.close();
     }
     public void deleteFile(String path){
         File file = new File(filePath+tempFolderName+path);
@@ -153,13 +174,11 @@ public class JarContentManager {
     public void deleteDirectory(File folder){
         if(folder.exists()){
             File[] files = folder.listFiles();
-            if(null!=files){
+            if(files!=null){
                 for (File file : files) {
                     if (file.isDirectory()) {
-
                         deleteDirectory(file);
                     } else {
-                        System.out.println(file.getAbsolutePath());
                         file.delete();
                     }
                 }
@@ -167,22 +186,22 @@ public class JarContentManager {
         }
     }
     public void createJarFromTemp() {
-        JarOutputStream target = null;
+        JarOutputStream target;
         try {
-            target = new JarOutputStream(new FileOutputStream("C:/temp/outpsut.jar"), manifest);
+            target = new JarOutputStream(new FileOutputStream("C:/temp/"+outputFileName), manifest);
             File inputDirectory = new File(filePath+tempFolderName);
-            for (File nestedFile : inputDirectory.listFiles())
+            for (File nestedFile : Objects.requireNonNull(inputDirectory.listFiles()))
                 createJarFile("", nestedFile, target);
             target.close();
         }
         catch (IOException e){
             e.printStackTrace();
         }
-
     }
     public void createJarFile(String parent,File source, JarOutputStream target) throws IOException {
 
         BufferedInputStream in = null;
+        if(source.getName().equals("MANIFEST.MF")) return;
         try
         {
             String name = (parent + source.getName()).replace("\\", "/");
@@ -198,13 +217,12 @@ public class JarContentManager {
                     target.putNextEntry(entry);
                     target.closeEntry();
                 }
-                for (File nestedFile : source.listFiles())
+                for (File nestedFile : Objects.requireNonNull(source.listFiles()))
                     createJarFile(name, nestedFile, target);
                 return;
             }
 
-            if(source.getName().equals("MANIFEST.MF")) return;
-            System.out.println(name);
+
 
             JarEntry entry = new JarEntry(name);
             entry.setTime(source.lastModified());

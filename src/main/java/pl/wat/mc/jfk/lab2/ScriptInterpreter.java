@@ -18,47 +18,52 @@ public class ScriptInterpreter {
     final public static Pattern instructionPattern = Pattern.compile("^(add-package|remove-package|add-method|remove-method|" +
             "add-class|remove-class|add-interface|remove-interface|set-method-body|add-before-method|add-after-method|" +
             "add-field|remove-field|add-ctor|remove-ctor|set-ctor-body)");
-    private Pattern bodyPattern = Pattern.compile("(?=\\{).*(?!\\})");
+    private Pattern bodyPattern = Pattern.compile("\\{.*}");
+    private Pattern endOfCodePattern = Pattern.compile("(}|;|\\))\\s*\\)$\\s*");
+    private Pattern simpleInstruction = Pattern.compile("^(add-package|remove-package|add-method|remove-method|add-class|remove-class|add-interface|remove-interface)\\s*\\(\\s*[A-Za-z\\.]*\\s*\\)");
 
 
     public ScriptInterpreter(String scriptPath,JarContentManager jcm,ClassesManager cm) throws CannotCompileException, NotFoundException {
         this.cm = cm;
         this.jcm = jcm;
-        this.scriptPath=scriptPath;
-        this.scriptLines = getFileLines(scriptPath);
-        fileInterpreter();
-
+        this.scriptLines = getScriptLines(scriptPath);
+        this.scriptPath = null;
     }
 
     public void fileInterpreter() throws CannotCompileException, NotFoundException {
 
         StringBuilder buffer = new StringBuilder();
-        String instructionName;
-        String methodBody = "";
+        String instructionName = "";
+
         Instruction instr = null;
-        boolean lastLineExecuted = false;
 
         for(int i =0;i<scriptLines.size();i++){
             String scriptLine = scriptLines.get(i);
-            instructionName = getResultFromMatcher(instructionPattern,scriptLine);
+            if(scriptLine.length()==0) continue;
+            if(instructionName.equals(""))
+                instructionName = getResultFromMatcher(instructionPattern,scriptLine);
+
             buffer.append(scriptLine);
-            if((i+1>=scriptLines.size())||
-                    (i+1<scriptLines.size()&&
-                            getResultFromMatcher(instructionPattern, scriptLines.get(i+1))!="null")){
+
+            if(instructionName!=null&&
+                    ((i+1<scriptLines.size()&&foundMatch(instructionPattern,scriptLines.get(i+1)))||
+                    (buffer.toString().contains(":")&&foundMatch(endOfCodePattern,buffer.toString()))||
+                            foundMatch(simpleInstruction,scriptLine))){
+                buffer = new StringBuilder(buffer.toString().substring(instructionName.length()+1,buffer.toString().length()-1));
 
                 String bufferString = buffer.toString();
-                //System.out.println(bufferString+"asdasd");
-                methodBody = getResultFromMatcher(bodyPattern,bufferString);
-                //System.out.println(methodBody);
+
+                String methodBody = getResultFromMatcher(bodyPattern,bufferString);
+
                 if(!methodBody.equals("null")) {
                     bufferString = bufferString.substring(0, bufferString.indexOf('{'));
                 }
-                instr = new Instruction(instructionName,bufferString , methodBody,cm);
-                instr.execute();
 
+                instr = new Instruction(instructionName,bufferString , methodBody,cm,jcm);
+                System.out.println("Executing instruction "+instructionName);
+                instr.execute();
                 buffer = new StringBuilder();
                 instructionName = "";
-                methodBody = "";
                 instr = null;
             }
 
@@ -66,16 +71,19 @@ public class ScriptInterpreter {
         jcm.saveAndExit();
 
     }
+    public boolean foundMatch(Pattern pattern,String line){
+        Matcher matcher = pattern.matcher(line);
+        return matcher.find();
+    }
 
     public static String getResultFromMatcher(Pattern pattern, String line){
-        Matcher matcher = null;
         String foundGroup = "null";
-        matcher = pattern.matcher(line);
+        Matcher matcher = pattern.matcher(line);
         if(matcher.find())
             foundGroup = matcher.group();
-
         return foundGroup;
     }
+
     public static List<String> getAllResultsFromMatcher(Pattern pattern,String line){
         Matcher matcher = pattern.matcher(line);
         List <String> returnList = new ArrayList<>();
@@ -87,7 +95,7 @@ public class ScriptInterpreter {
         return returnList;
     }
 
-    private List<String> getFileLines(String path){
+    private List<String> getScriptLines(String path){
         List <String> lines = new ArrayList<>();
         try{
             File myFile = new File(path);
