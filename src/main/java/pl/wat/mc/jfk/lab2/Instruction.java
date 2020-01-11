@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 public class Instruction {
 
     private JarContentManager jcm;
-    private ClassesManager cm;
+    private ClassEditor cm;
 
     private Pattern namePattern = Pattern.compile("(?!\\s*:\\s*)[A-Za-z$_0-9]+(?=\\s*)");
     private Pattern srcPattern = Pattern.compile("(?!\\s*:\\s*).*");
@@ -30,7 +30,7 @@ public class Instruction {
     private CtClass[] arguments;
 
     boolean parametrizedInstruction = false;
-    public Instruction(String instructionName,String instructionParameters,String bodyCode,ClassesManager cm,JarContentManager jcm) {
+    public Instruction(String instructionName, String instructionParameters, String bodyCode, ClassEditor cm, JarContentManager jcm) {
         this.cm = cm;
         this.jcm = jcm;
         if(instructionParameters.contains(":")) parametrizedInstruction = true;
@@ -47,7 +47,7 @@ public class Instruction {
             this.bodyCode = bodyCode;
             this.src = ScriptInterpreter.getResultFromMatcher(srcPattern,instructionParams);
             if(bodyCode!="null")src+=bodyCode;
-            this.arguments = getArguments(instructionParams);
+            this.arguments = getArgumentsFromString(instructionParams);
         }
     }
 
@@ -83,6 +83,7 @@ public class Instruction {
             cm.removeMethod(className,name,arguments);
         }
         else if (instructionName.equals("add-before-method")||instructionName.equals("add-after-method")||instructionName.equals("set-method-body")){
+            System.out.println("Adding "+bodyCode+"\nto Class "+className+" to method "+name);
             switch(instructionName){
                 case"add-before-method":
                     cm.addCodeBeforeMethod(className,name,arguments,bodyCode);
@@ -96,6 +97,7 @@ public class Instruction {
             }
         }
         else if (instructionName.equals("add-ctor")||instructionName.equals("add-field")||instructionName.equals("add-method")){
+            System.out.println(src);
             switch(instructionName){
                 case"add-ctor":
                     cm.addConstructor(className,src);
@@ -107,17 +109,15 @@ public class Instruction {
                     cm.addMethod(className,src);
                     break;
             }
-
         }
         else if (instructionName.equals("remove-ctor")){
             cm.removeConstructor(className,arguments);
-
         }
         else if (instructionName.equals("set-ctor-body")){
             cm.setConstructorBody(className,arguments,bodyCode);
         }
     }
-    private CtClass[] getArguments(String instructionParameters)  {
+    private CtClass[] getArgumentsFromString(String instructionParameters)  {
         List<CtClass> ctList = new ArrayList<>();
 
         CtClass[] array = null;
@@ -138,9 +138,7 @@ public class Instruction {
                 array[i] = ctList.get(i);
             }
         }
-
         return array;
-
     }
 
 }

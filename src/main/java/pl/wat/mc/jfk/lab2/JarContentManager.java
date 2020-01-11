@@ -5,7 +5,6 @@ import javassist.CtClass;
 import javassist.NotFoundException;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
@@ -14,11 +13,12 @@ import java.util.jar.*;
 
 public class JarContentManager {
 
-    public final String filePath;
-    private final String fileName;
+    private String filePath = "";
+    private String fileName = "";
     private final String fullPath;
     private final String tempFolderName = "/temp/";
     public String outputFileName;
+    public String addedClassPath;
     private ClassPool classPool;
     private Manifest manifest;
 
@@ -30,24 +30,27 @@ public class JarContentManager {
     public JarContentManager(String jarPath) throws IOException {
 
         this.fullPath = jarPath;
-        this.filePath = jarPath.substring(0,jarPath.lastIndexOf('/'));
-        this.fileName = jarPath.substring(jarPath.lastIndexOf('/'));
+        if(jarPath.contains("/")) {
+            this.filePath = jarPath.substring(0, jarPath.lastIndexOf('/'));
+            this.fileName = jarPath.substring(jarPath.lastIndexOf('/'));
+        }
         this.classNames = new ArrayList<>();
         this.packageNames = new ArrayList<>();
         this.classPool = getJarClassPool();
         this.outputFileName = "";
-        System.out.println(fullPath);
         this.urls = new URL[]{new File(fullPath).toURI().toURL()};
+        this.manifest = getJarManifest();
         getPackageAndClassNames();
+        getJarClassPool();
         initForScript();
     }
     public Class<?> loadClass(String classPath){
-        Class returnClass = null;
+        Class <?> returnClass = null;
         try {
             URLClassLoader cl = new URLClassLoader(urls,this.getClass().getClassLoader());
 
             returnClass = cl.loadClass(classPath);
-           // cl.close();
+
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -58,10 +61,10 @@ public class JarContentManager {
 
     public void initForScript() throws IOException {
         getJarClassPool();
-        getJarManifest();
         unzipJarToTemp();
     }
-    public void saveAndExit() {
+    public void saveAndExit(){
+
         createJarFromTemp();
         deleteTempFolder();
 
@@ -83,7 +86,7 @@ public class JarContentManager {
                 classPool.insertClassPath(filePath + tempFolderName);
             }catch(NotFoundException e){
                 e.printStackTrace();
-                System.out.println("Error in getting class pool in path"+filePath+tempFolderName);
+                System.out.println("Error in getting class pool in path "+filePath+tempFolderName);
             }
         }
         return classPool;
@@ -95,9 +98,13 @@ public class JarContentManager {
             FileInputStream fis = new FileInputStream(file);
             JarInputStream jarStream = new JarInputStream(fis);
             manifest = jarStream.getManifest();
+            fis.close();
         }
-
         return manifest;
+    }public void addClassPath() throws NotFoundException {
+        manifest.getMainAttributes().putValue("Class-path",addedClassPath);
+        classPool.insertClassPath(addedClassPath);
+        System.out.println("elo");
     }
     public void createFolder(String folderPath) {
         File file = new File(filePath+tempFolderName+folderPath);
@@ -188,7 +195,8 @@ public class JarContentManager {
     public void createJarFromTemp() {
         JarOutputStream target;
         try {
-            target = new JarOutputStream(new FileOutputStream("C:/temp/"+outputFileName), manifest);
+            System.out.println("Saving result file in "+filePath+outputFileName);
+            target = new JarOutputStream(new FileOutputStream(filePath+outputFileName), manifest);
             File inputDirectory = new File(filePath+tempFolderName);
             for (File nestedFile : Objects.requireNonNull(inputDirectory.listFiles()))
                 createJarFile("", nestedFile, target);
