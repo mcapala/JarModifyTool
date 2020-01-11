@@ -5,10 +5,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-public class ClassesManager {
+public class ClassEditor {
     private final JarContentManager jcm;
 
-    public ClassesManager(JarContentManager jfm) {
+    public ClassEditor(JarContentManager jfm) {
         this.jcm = jfm;
     }
 
@@ -163,7 +163,6 @@ public class ClassesManager {
         return cm;
     }
 
-
     public CtClass getCtClass(String classPath) {
         CtClass temp = null;
         try {
@@ -175,10 +174,7 @@ public class ClassesManager {
         if(temp==null){
             System.out.println("Class "+classPath+" does not exist.");
         }
-
         return temp;
-
     }
-
 
 }

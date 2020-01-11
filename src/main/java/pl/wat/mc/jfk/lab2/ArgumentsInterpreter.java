@@ -9,17 +9,17 @@ public class ArgumentsInterpreter {
 
     private final String[] args;
     private JarContentManager jcm;
-    private ClassesManager cm;
+    private ClassEditor cm;
     private ScriptInterpreter si;
     public ArgumentsInterpreter(String[] args) throws IOException, NotFoundException, CannotCompileException {
         this.args = args;
-
         mainLoop();
     }
     public void mainLoop() throws IOException, NotFoundException, CannotCompileException {
         String operationType = null;
         boolean listingFlag = false;
         boolean scriptFlag = false;
+        boolean classPathFlag = false;
         for(String arg: args){
             if (arg.equals("--list-classes")) {
                 listingFlag = true;
@@ -31,11 +31,10 @@ public class ArgumentsInterpreter {
             else if(arg.charAt(0)=='-'&&arg.charAt(1)=='-') operationType = arg;
             else if(operationType.equals("--i")){
                 jcm = new JarContentManager(arg);
-                cm = new ClassesManager(jcm);
+                cm = new ClassEditor(jcm);
             }
             else if(operationType.equals("--o")){
                 jcm.outputFileName = arg;
-                si.fileInterpreter();
             }
             else if(operationType.equals("--script")){
                 if(!listingFlag) {
@@ -43,6 +42,10 @@ public class ArgumentsInterpreter {
                     jcm.initForScript();
                     si = new ScriptInterpreter(arg, jcm, cm);
                 }
+            }
+            else if(operationType.equals("--cp")){
+                jcm.addedClassPath = arg;
+                classPathFlag = true;
             }
             else if(!scriptFlag) {
 
@@ -61,8 +64,11 @@ public class ArgumentsInterpreter {
                 }
             }
         }
-        if(jcm.outputFileName == null){
-            System.out.println("Output file parameter missing. Changes won't be saved.");
+        if(classPathFlag)jcm.addClassPath();
+        if(scriptFlag){
+            if(jcm.outputFileName==null){
+                System.out.println("Output file name is not set.");
+            }else si.fileInterpreter();
         }
     }
 }
