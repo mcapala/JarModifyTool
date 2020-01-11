@@ -3,6 +3,7 @@ package pl.wat.mc.jfk.lab2;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.NotFoundException;
+import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.net.URL;
@@ -30,9 +31,9 @@ public class JarContentManager {
     public JarContentManager(String jarPath) throws IOException {
 
         this.fullPath = jarPath;
-        if(jarPath.contains("/")) {
-            this.filePath = jarPath.substring(0, jarPath.lastIndexOf('/'));
-            this.fileName = jarPath.substring(jarPath.lastIndexOf('/'));
+        if(jarPath.contains("\\")) {
+            this.filePath = jarPath.substring(0, jarPath.lastIndexOf('\\'));
+            this.fileName = jarPath.substring(jarPath.lastIndexOf('\\'));
         }
         this.classNames = new ArrayList<>();
         this.packageNames = new ArrayList<>();
@@ -63,12 +64,12 @@ public class JarContentManager {
         getJarClassPool();
         unzipJarToTemp();
     }
-    public void saveAndExit(){
 
+    public void saveAndExit() throws IOException {
         createJarFromTemp();
         deleteTempFolder();
-
     }
+
     public void saveCtClass(CtClass clazz){
         try {
             clazz.writeFile(filePath+tempFolderName);
@@ -92,6 +93,7 @@ public class JarContentManager {
         return classPool;
 
     }
+
     public Manifest getJarManifest() throws IOException {
         if(manifest==null){
             File file = new File(fullPath);
@@ -101,15 +103,18 @@ public class JarContentManager {
             fis.close();
         }
         return manifest;
-    }public void addClassPath() throws NotFoundException {
+    }
+    public void addClassPath() throws NotFoundException {
         manifest.getMainAttributes().putValue("Class-path",addedClassPath);
         classPool.insertClassPath(addedClassPath);
         System.out.println("elo");
     }
+
     public void createFolder(String folderPath) {
         File file = new File(filePath+tempFolderName+folderPath);
         file.mkdirs();
     }
+
     public void getPackageAndClassNames() throws IOException {
         File file = new File(fullPath);
         JarFile jar = new JarFile(file);
@@ -120,18 +125,21 @@ public class JarContentManager {
             else if (name.endsWith("/")&&!name.equals("META-INF/")) packageNames.add(name.replaceAll("/","."));
         }
     }
+
     public void printClassNames(){
         System.out.println("Class names:");
         for(String className:classNames){
             System.out.println(className);
         }
     }
+
     public void printPackageNames(){
         System.out.println("Package names:");
         for(String packageName:packageNames){
             System.out.println(packageName);
         }
     }
+
     public void unzipJarToTemp() throws IOException {
         File file = new File(fullPath);
         JarFile jar = new JarFile(file);
@@ -169,34 +177,24 @@ public class JarContentManager {
         }
         jar.close();
     }
+
     public void deleteFile(String path){
         File file = new File(filePath+tempFolderName+path);
         file.delete();
+
     }
-    public void deleteTempFolder(){
+
+    public void deleteTempFolder() throws IOException {
         String pathToTemp = filePath+tempFolderName;
         File tempDirectory = new File(pathToTemp);
-        deleteDirectory(tempDirectory);
+        FileUtils.deleteDirectory(tempDirectory);
     }
-    public void deleteDirectory(File folder){
-        if(folder.exists()){
-            File[] files = folder.listFiles();
-            if(files!=null){
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        deleteDirectory(file);
-                    } else {
-                        file.delete();
-                    }
-                }
-            }
-        }
-    }
+
     public void createJarFromTemp() {
         JarOutputStream target;
         try {
             System.out.println("Saving result file in "+filePath+outputFileName);
-            target = new JarOutputStream(new FileOutputStream(filePath+outputFileName), manifest);
+            target = new JarOutputStream(new FileOutputStream(outputFileName), manifest);
             File inputDirectory = new File(filePath+tempFolderName);
             for (File nestedFile : Objects.requireNonNull(inputDirectory.listFiles()))
                 createJarFile("", nestedFile, target);
@@ -207,8 +205,8 @@ public class JarContentManager {
         }
     }
     public void createJarFile(String parent,File source, JarOutputStream target) throws IOException {
-
         BufferedInputStream in = null;
+
         if(source.getName().equals("MANIFEST.MF")) return;
         try
         {
@@ -229,9 +227,6 @@ public class JarContentManager {
                     createJarFile(name, nestedFile, target);
                 return;
             }
-
-
-
             JarEntry entry = new JarEntry(name);
             entry.setTime(source.lastModified());
             target.putNextEntry(entry);

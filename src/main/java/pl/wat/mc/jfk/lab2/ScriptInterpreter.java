@@ -12,7 +12,6 @@ import java.util.regex.Pattern;
 
 public class ScriptInterpreter {
 
-    private final String scriptPath;
     private final List<String> scriptLines;
     private JarContentManager jcm;
     private ClassEditor cm;
@@ -24,11 +23,10 @@ public class ScriptInterpreter {
     private Pattern simpleInstruction = Pattern.compile("^(add-package|remove-package|add-method|remove-method|add-class|remove-class|add-interface|remove-interface)\\s*\\(\\s*[A-Za-z\\.]*\\s*\\)");
 
 
-    public ScriptInterpreter(String scriptPath, JarContentManager jcm, ClassEditor cm) throws CannotCompileException, NotFoundException {
+    public ScriptInterpreter(String scriptPath, JarContentManager jcm, ClassEditor cm){
         this.cm = cm;
         this.jcm = jcm;
         this.scriptLines = getScriptLines(scriptPath);
-        this.scriptPath = null;
     }
 
     public void fileInterpreter() throws CannotCompileException, NotFoundException, IOException {
