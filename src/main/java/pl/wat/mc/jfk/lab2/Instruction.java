@@ -19,7 +19,6 @@ public class Instruction {
     private Pattern primitives = Pattern.compile("(boolean|char|byte|short|int|long|float|double|void)");
     private Pattern argumentsPattern = Pattern.compile("(?!,\\s*\\(\\s*)("+classPattern.toString()+",?|\\s*"+primitives+"\\s*,?)*(?=\\s*\\)\\s*)");
 
-    private String instructionParams;
     private String instructionName;
     private String packageName;
     private String className;
@@ -34,18 +33,18 @@ public class Instruction {
         this.cm = cm;
         this.jcm = jcm;
         if(instructionParameters.contains(":")) parametrizedInstruction = true;
-        this.instructionParams = instructionParameters;
+        String instructionParams = instructionParameters;
         this.instructionName = instructionName;
-        this.packageName = ScriptInterpreter.getResultFromMatcher(packagePattern,instructionParams);
-        this.className = ScriptInterpreter.getResultFromMatcher(classPattern,instructionParams);
+        this.packageName = ScriptInterpreter.getResultFromMatcher(packagePattern, instructionParams);
+        this.className = ScriptInterpreter.getResultFromMatcher(classPattern, instructionParams);
 
-        this.instructionParams = instructionParams.replace(className,"");
+        instructionParams = instructionParams.replace(className,"");
 
 
         if(parametrizedInstruction){
-            this.name = ScriptInterpreter.getResultFromMatcher(namePattern,instructionParams);
+            this.name = ScriptInterpreter.getResultFromMatcher(namePattern, instructionParams);
             this.bodyCode = bodyCode;
-            this.src = ScriptInterpreter.getResultFromMatcher(srcPattern,instructionParams);
+            this.src = ScriptInterpreter.getResultFromMatcher(srcPattern, instructionParams);
             if(bodyCode!="null")src+=bodyCode;
             this.arguments = getArgumentsFromString(instructionParams);
         }
@@ -124,12 +123,13 @@ public class Instruction {
 
         List<String> argumentsList = ScriptInterpreter.getAllResultsFromMatcher(argumentsPattern,instructionParameters);
 
-        for(Iterator iter = argumentsList.iterator();iter.hasNext();){
+        for (String s : argumentsList) {
             CtClass clazz = null;
             try {
-                clazz = jcm.getJarClassPool().get(iter.next().toString());
+                clazz = jcm.getJarClassPool().get(s);
+            } catch (Exception e) {
+                System.out.println("Class " + s + " does not exist.");
             }
-            catch(Exception e){}
             ctList.add(clazz);
         }
         if(ctList.size()>0) {
