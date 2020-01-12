@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+Main-Class: pl.wat.mc.jfk.lab2.Main
+
