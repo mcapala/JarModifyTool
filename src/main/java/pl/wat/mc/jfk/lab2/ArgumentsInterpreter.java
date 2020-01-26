@@ -86,7 +86,7 @@ public class ArgumentsInterpreter {
 
         if(scriptFlag){
             if(listPackagesFlag|listClassesFlag|listingFlag) throw new IllegalArgumentException("Invalid arguments.");
-            if(jcm.outputFileName==""){
+            if(jcm.outputFileName.equals("")){
                 throw new NoSuchFileException("Output file name is not set.");
             }
             else{

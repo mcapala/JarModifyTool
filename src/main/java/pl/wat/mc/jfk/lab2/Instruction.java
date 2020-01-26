@@ -45,7 +45,7 @@ public class Instruction {
             this.name = ScriptInterpreter.getResultFromMatcher(namePattern, instructionParams);
             this.bodyCode = bodyCode;
             this.src = ScriptInterpreter.getResultFromMatcher(srcPattern, instructionParams);
-            if(bodyCode!="null")src+=bodyCode;
+            if(!bodyCode.equals("null"))src+=bodyCode;
             this.arguments = getArgumentsFromString(instructionParams);
         }
     }

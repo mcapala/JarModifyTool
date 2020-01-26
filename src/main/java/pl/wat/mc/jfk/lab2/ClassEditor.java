@@ -2,7 +2,6 @@ package pl.wat.mc.jfk.lab2;
 
 import javassist.*;
 
-import java.io.InvalidClassException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

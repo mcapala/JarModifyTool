@@ -20,7 +20,7 @@ public class ScriptInterpreter {
             "add-field|remove-field|add-ctor|remove-ctor|set-ctor-body|set-superclass)");
     private Pattern bodyPattern = Pattern.compile("\\{.*}");
     private Pattern endOfCodePattern = Pattern.compile("(}|;|\\))\\s*\\)$\\s*");
-    private Pattern simpleInstruction = Pattern.compile("^(add-package|remove-package|add-method|remove-method|add-class|remove-class|add-interface|remove-interface)\\s*\\(\\s*[A-Za-z\\.]*\\s*\\)");
+    private Pattern simpleInstruction = Pattern.compile("^(add-package|remove-package|add-method|remove-method|add-class|remove-class|add-interface|remove-interface)\\s*\\(\\s*[A-Za-z.]*\\s*\\)");
 
 
     public ScriptInterpreter(String scriptPath, JarContentManager jcm, ClassEditor cm){
@@ -34,7 +34,7 @@ public class ScriptInterpreter {
         StringBuilder buffer = new StringBuilder();
         String instructionName = "";
 
-        Instruction instr = null;
+        Instruction instr;
 
         for(int i =0;i<scriptLines.size();i++){
             String scriptLine = scriptLines.get(i);
