@@ -107,7 +107,6 @@ public class JarContentManager {
     public void addClassPath() throws NotFoundException {
         manifest.getMainAttributes().putValue("Class-path",addedClassPath);
         classPool.insertClassPath(addedClassPath);
-        System.out.println("elo");
     }
 
     public void createFolder(String folderPath) {

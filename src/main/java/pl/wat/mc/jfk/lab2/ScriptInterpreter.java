@@ -17,7 +17,7 @@ public class ScriptInterpreter {
     private ClassEditor cm;
     final public static Pattern instructionPattern = Pattern.compile("^(add-package|remove-package|add-method|remove-method|" +
             "add-class|remove-class|add-interface|remove-interface|set-method-body|add-before-method|add-after-method|" +
-            "add-field|remove-field|add-ctor|remove-ctor|set-ctor-body)");
+            "add-field|remove-field|add-ctor|remove-ctor|set-ctor-body|set-superclass)");
     private Pattern bodyPattern = Pattern.compile("\\{.*}");
     private Pattern endOfCodePattern = Pattern.compile("(}|;|\\))\\s*\\)$\\s*");
     private Pattern simpleInstruction = Pattern.compile("^(add-package|remove-package|add-method|remove-method|add-class|remove-class|add-interface|remove-interface)\\s*\\(\\s*[A-Za-z\\.]*\\s*\\)");
