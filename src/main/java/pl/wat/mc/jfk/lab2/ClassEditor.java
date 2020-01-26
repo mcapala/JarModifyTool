@@ -1,6 +1,8 @@
 package pl.wat.mc.jfk.lab2;
 
 import javassist.*;
+
+import java.io.InvalidClassException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -10,6 +12,20 @@ public class ClassEditor {
 
     public ClassEditor(JarContentManager jfm) {
         this.jcm = jfm;
+    }
+
+
+    public void setSuperclass(String className, String superclassName) {
+        try {
+            CtClass clazz = getCtClass(className);
+            CtClass superclass = getCtClass(superclassName);
+            clazz.defrost();
+            clazz.setSuperclass(superclass);
+        }
+        catch (CannotCompileException e){
+            System.out.println("Compile error.");
+            e.printStackTrace();
+        }
     }
 
     public void addClass(String classPath) {

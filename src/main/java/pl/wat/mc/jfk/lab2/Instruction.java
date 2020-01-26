@@ -12,7 +12,7 @@ public class Instruction {
     private JarContentManager jcm;
     private ClassEditor cm;
 
-    private Pattern namePattern = Pattern.compile("(?!\\s*:\\s*)[A-Za-z$_0-9]+(?=\\s*)");
+    private Pattern namePattern = Pattern.compile("(?!\\s*:\\s*)[A-Za-z$_0-9.]+(?=\\s*)");
     private Pattern srcPattern = Pattern.compile("(?!\\s*:\\s*).*");
     private Pattern packagePattern = Pattern.compile("(\\w[\\w\\d]*\\.)+");
     private Pattern classPattern = Pattern.compile("(\\w[\\w\\d]*\\.)+[\\w\\d]+");
@@ -75,8 +75,14 @@ public class Instruction {
                     break;
             }
         }
-        else if(instructionName.equals("remove-field")){
-            cm.removeField(className, name);
+        else if(instructionName.equals("remove-field")||instructionName.equals("set-superclass")){
+            switch (instructionName) {
+                case "remove-field":
+                    cm.removeField(className, name);
+                    break;
+                case "set-superclass":
+                    cm.setSuperclass(className,name);
+            }
         }
         else if(instructionName.equals("remove-method")){
             cm.removeMethod(className,name,arguments);

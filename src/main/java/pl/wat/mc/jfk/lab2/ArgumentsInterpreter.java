@@ -47,7 +47,7 @@ public class ArgumentsInterpreter {
                     jcm.outputFileName = arg;
                 }
                 else if(operationType.equals("--script")){
-                    if(!listingFlag) {
+                    if(!listingFlag&&arg.charAt(0)!='-') {
                         scriptFlag=true;
                         si = new ScriptInterpreter(arg, jcm, cm);
                     }else throw new IllegalArgumentException();
