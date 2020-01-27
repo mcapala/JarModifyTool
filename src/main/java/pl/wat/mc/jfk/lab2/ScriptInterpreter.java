@@ -61,7 +61,6 @@ public class ScriptInterpreter {
                 }
 
                 instr = new Instruction(instructionName,bufferString , methodBody,cm,jcm);
-                System.out.println("Executing instruction "+instructionName);
                 instr.execute();
                 buffer = new StringBuilder();
                 instructionName = "";
@@ -105,7 +104,7 @@ public class ScriptInterpreter {
         }
         catch(FileNotFoundException e)
         {
-            System.out.println(path+" not found.");
+            e.printStackTrace();
         }
         return lines;
     }

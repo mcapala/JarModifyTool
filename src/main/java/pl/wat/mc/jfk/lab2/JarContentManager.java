@@ -53,6 +53,7 @@ public class JarContentManager {
             returnClass = cl.loadClass(classPath);
 
         } catch (ClassNotFoundException e) {
+            deleteTempFolder();
             e.printStackTrace();
         }
         return returnClass;
@@ -86,8 +87,8 @@ public class JarContentManager {
                 classPool = ClassPool.getDefault();
                 classPool.insertClassPath(filePath + tempFolderName);
             }catch(NotFoundException e){
+                deleteTempFolder();
                 e.printStackTrace();
-                System.out.println("Error in getting class pool in path "+filePath+tempFolderName);
             }
         }
         return classPool;
@@ -183,16 +184,19 @@ public class JarContentManager {
 
     }
 
-    public void deleteTempFolder() throws IOException {
-        String pathToTemp = filePath+tempFolderName;
-        File tempDirectory = new File(pathToTemp);
-        FileUtils.deleteDirectory(tempDirectory);
+    public void deleteTempFolder() {
+        try {
+            String pathToTemp = filePath + tempFolderName;
+            File tempDirectory = new File(pathToTemp);
+            FileUtils.deleteDirectory(tempDirectory);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
     }
 
     public void createJarFromTemp() {
         JarOutputStream target;
         try {
-            System.out.println("Saving result file in "+filePath+outputFileName);
             target = new JarOutputStream(new FileOutputStream(outputFileName), manifest);
             File inputDirectory = new File(filePath+tempFolderName);
             for (File nestedFile : Objects.requireNonNull(inputDirectory.listFiles()))
@@ -200,6 +204,7 @@ public class JarContentManager {
             target.close();
         }
         catch (IOException e){
+            deleteTempFolder();
             e.printStackTrace();
         }
     }
