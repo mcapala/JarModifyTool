@@ -22,7 +22,7 @@ public class ClassEditor {
             clazz.setSuperclass(superclass);
         }
         catch (CannotCompileException e){
-            System.out.println("Compile error.");
+            jcm.deleteTempFolder();
             e.printStackTrace();
         }
     }
@@ -172,7 +172,7 @@ public class ClassEditor {
             }
 
         } catch (NotFoundException e) {
-            System.out.println("Error in getting method from class" + cc.getName());
+            jcm.deleteTempFolder();
             e.printStackTrace();
         }
         return cm;
@@ -184,7 +184,8 @@ public class ClassEditor {
             temp = jcm.getJarClassPool().get(classPath);
             temp.defrost();
         } catch (Exception e) {
-            System.out.println("Error in getting class from class Pool");
+            jcm.deleteTempFolder();
+            e.printStackTrace();
         }
         if(temp==null){
             System.out.println("Class "+classPath+" does not exist.");
